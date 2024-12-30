@@ -3,11 +3,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
+import java.util.Map;
 
 public class ConversorMoneda {
-    public Moneda tipoCambio(int moenda){
-        URI direccion = URI.create("https://v6.exchangerate-api.com/v6/f11b71fb701ec0b33cc028c4/latest/"+moenda);
+    public double obtenerTasa(String baseCode, String targetCode) {
+        URI direccion = URI.create("https://v6.exchangerate-api.com/v6/f11b71fb701ec0b33cc028c4/latest/" + baseCode);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -17,10 +17,17 @@ public class ConversorMoneda {
         try {
             HttpResponse<String> response = client
                     .send(request, HttpResponse.BodyHandlers.ofString());
-            return new Gson().fromJson(response.body(), Moneda.class);
+            Moneda datos = new Gson().fromJson(response.body(), Moneda.class);
+
+            Map<String, Double> tasas = datos.conversion_rates();
+            if (tasas.containsKey(targetCode)) {
+                return tasas.get(targetCode);
+            } else {
+                throw new RuntimeException("No se encontró la tasa de cambio para " + targetCode);
+            }
+
         } catch (Exception e) {
-            throw new RuntimeException("No se encontro la moneda.");
+            throw new RuntimeException("Error al obtener las tasas de cambio: " + e.getMessage());
         }
     }
-
 }
